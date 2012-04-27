@@ -23,11 +23,11 @@ import java.util.logging.Level;
 
 import net.darklikally.LyTreeHelper.LyTreeHelperPlugin;
 
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
+import org.bukkit.event.Listener;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
-import org.bukkit.event.server.ServerListener;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
@@ -38,7 +38,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
  *
  * @author DarkLiKally
  */
-public class LyTreeHelperServerListener extends ServerListener {
+public class LyTreeHelperServerListener implements Listener {
     /**
      * Plugin.
      */
@@ -63,11 +63,10 @@ public class LyTreeHelperServerListener extends ServerListener {
     public void registerEvents() {
         PluginManager pm = plugin.getServer().getPluginManager();
 
-        pm.registerEvent(Event.Type.PLUGIN_ENABLE, this, Priority.Monitor, plugin);
-        pm.registerEvent(Event.Type.PLUGIN_DISABLE, this, Priority.Monitor, plugin);
+        pm.registerEvents(this, this.plugin);
     }
 
-    @Override
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPluginDisable(PluginDisableEvent event) {
         // Check to see if the plugin thats being disabled is the one we are using
         if (this.Methods != null && this.Methods.hasMethod()) {
@@ -80,7 +79,7 @@ public class LyTreeHelperServerListener extends ServerListener {
         }
     }
 
-    @Override
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onPluginEnable(PluginEnableEvent event) {
         // Check to see if we need a payment method
         if (!this.Methods.hasMethod()) {

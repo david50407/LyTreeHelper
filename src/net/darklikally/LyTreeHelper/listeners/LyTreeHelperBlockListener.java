@@ -37,10 +37,10 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
-import org.bukkit.event.block.BlockListener;
 import org.bukkit.event.block.LeavesDecayEvent;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -53,7 +53,7 @@ import com.nijikokun.register.payment.Method.*;
  * @author DarkLiKally
  * @version 2.0
  */
-public class LyTreeHelperBlockListener extends BlockListener {
+public class LyTreeHelperBlockListener implements Listener {
     /**
      * Plugin.
      */
@@ -98,8 +98,7 @@ public class LyTreeHelperBlockListener extends BlockListener {
     public void registerEvents() {
         PluginManager pm = plugin.getServer().getPluginManager();
 
-        pm.registerEvent(Event.Type.LEAVES_DECAY, this, Priority.Highest, plugin);
-        pm.registerEvent(Event.Type.BLOCK_BREAK, this, Priority.Highest, plugin);
+        pm.registerEvents(this, this.plugin);
     }
 
     private void clearProcess(int processNumber) {
@@ -141,6 +140,13 @@ public class LyTreeHelperBlockListener extends BlockListener {
                                         Byte.valueOf(block.getData())));
                         block.setType(Material.AIR);
                     }
+                    else if (block.getType() == Material.VINE) {
+                        block.getWorld().dropItemNaturally(
+                                block.getLocation(),
+                                new ItemStack(Material.VINE, 1, (short)0,
+                                        Byte.valueOf(block.getData())));
+                        block.setType(Material.AIR);
+                    }
                 }
 
                 doAutoplantSapling = true;
@@ -153,7 +159,8 @@ public class LyTreeHelperBlockListener extends BlockListener {
                 }
 
                 for(Block block : this.checkedBlocks.get(processNumber)) {
-                    if(block.getType() != Material.SNOW) {
+                    if((block.getType() != Material.SNOW) && 
+                    		(block.getType() != Material.VINE)) {
                         this.dropLeaveItems(block);
                     }
                     block.setType(Material.AIR);
@@ -191,6 +198,11 @@ public class LyTreeHelperBlockListener extends BlockListener {
                         block.getWorld().dropItemNaturally(
                                 block.getLocation(),
                                 new ItemStack(Material.LOG, 1, (short)0,
+                                        Byte.valueOf(block.getData())));
+                    } else if(block.getType() == Material.VINE) {
+                        block.getWorld().dropItemNaturally(
+                                block.getLocation(),
+                                new ItemStack(Material.VINE, 1, (short)0,
                                         Byte.valueOf(block.getData())));
                     } else if(block.getType() != Material.SNOW) {
                         this.dropLeaveItems(block);
@@ -241,6 +253,7 @@ public class LyTreeHelperBlockListener extends BlockListener {
 
             if((relBlock.getType() == Material.LEAVES)
                     || (relBlock.getType() == Material.LOG)
+                    || (relBlock.getType() == Material.VINE)
                     || (relBlock.getType() == Material.SNOW)) {
                 if(relBlock.getType() == Material.LEAVES) {
                     this.hasLeaves.put(processNumber, true);
@@ -281,6 +294,7 @@ public class LyTreeHelperBlockListener extends BlockListener {
 
             if((relBlock.getType() == Material.LEAVES)
                     || (relBlock.getType() == Material.SNOW)
+                    || (relBlock.getType() == Material.VINE)
                     || (relBlock.getType() == Material.LOG)) {
                 if(relBlock.getType() == Material.LEAVES) {
                     this.hasLeaves.put(processNumber, true);
@@ -289,7 +303,8 @@ public class LyTreeHelperBlockListener extends BlockListener {
                 if(!this.checkedBlocks.get(processNumber).contains(relBlock)) {
                     this.checkedBlocksCounter++;
 
-                    if(relBlock.getType() == Material.LOG) {
+                    if((relBlock.getType() == Material.LOG) ||
+                    		(relBlock.getType() == Material.VINE)) {
                         this.checkedBlocks.get(processNumber).add(relBlock);
                     }
 
@@ -313,7 +328,7 @@ public class LyTreeHelperBlockListener extends BlockListener {
         return true;
     }
 
-    @Override
+    @EventHandler(priority = EventPriority.HIGH)
     public void onLeavesDecay(LeavesDecayEvent event) {
         if(event.isCancelled()) {
             return;
@@ -334,7 +349,7 @@ public class LyTreeHelperBlockListener extends BlockListener {
         }
     }
 
-    @Override
+    @EventHandler(priority = EventPriority.HIGH)
     public void onBlockBreak(BlockBreakEvent event) {
         if(event.isCancelled()) {
             return;
@@ -482,7 +497,7 @@ public class LyTreeHelperBlockListener extends BlockListener {
      * @param location
      * @param type
      */
-    private void plantSapling(Location location, short type ) {
+    private void plantSapling(Location location, short type) {
     //private void plantSapling(Location location, Byte data) {
         Block block = location.getBlock();
 
@@ -524,7 +539,8 @@ public class LyTreeHelperBlockListener extends BlockListener {
                     alreadyChecked.add(relBlock);
                     def = isGroundConnection(relBlock, def, alreadyChecked);
                 }  
-            } else if (!this.blocksToIgnore.contains(relBlock.getType())) {
+            } else if ((!this.blocksToIgnore.contains(relBlock.getType()))
+            	|| (relBlock.getType() == Material.VINE)) {
                 def = true;
             }
         }

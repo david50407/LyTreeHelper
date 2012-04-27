@@ -22,10 +22,10 @@ package net.darklikally.LyTreeHelper.listeners;
 import net.darklikally.LyTreeHelper.LyTreeHelperPlugin;
 
 import org.bukkit.World;
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.Listener;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.world.WorldInitEvent;
-import org.bukkit.event.world.WorldListener;
 import org.bukkit.event.world.WorldLoadEvent;
 import org.bukkit.plugin.PluginManager;
 
@@ -33,7 +33,7 @@ import org.bukkit.plugin.PluginManager;
  *
  * @author DarkLiKally
  */
-public class LyTreeHelperWorldListener extends WorldListener {
+public class LyTreeHelperWorldListener implements Listener {
     /**
      * Plugin.
      */
@@ -51,16 +51,15 @@ public class LyTreeHelperWorldListener extends WorldListener {
     public void registerEvents() {
         PluginManager pm = plugin.getServer().getPluginManager();
 
-        pm.registerEvent(Event.Type.WORLD_LOAD, this, Priority.Monitor, plugin);
-        pm.registerEvent(Event.Type.WORLD_INIT, this, Priority.Monitor, plugin);
+        pm.registerEvents(this, this.plugin);
     }
 
-    @Override
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldLoad(WorldLoadEvent event) {
         this.addPopulator(event.getWorld());
     }
     
-    @Override
+    @EventHandler(priority = EventPriority.MONITOR)
     public void onWorldInit(WorldInitEvent event) {
         this.addPopulator(event.getWorld());
     }   

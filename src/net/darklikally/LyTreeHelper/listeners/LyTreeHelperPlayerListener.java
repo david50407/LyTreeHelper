@@ -21,11 +21,10 @@ package net.darklikally.LyTreeHelper.listeners;
 
 import net.darklikally.LyTreeHelper.LyTreeHelperPlugin;
 
-import org.bukkit.event.Event;
-import org.bukkit.event.Event.Priority;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerKickEvent;
-import org.bukkit.event.player.PlayerListener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.PluginManager;
 
@@ -33,7 +32,7 @@ import org.bukkit.plugin.PluginManager;
  *
  * @author DarkLiKally
  */
-public class LyTreeHelperPlayerListener extends PlayerListener {
+public class LyTreeHelperPlayerListener implements Listener {
     /**
      * Plugin.
      */
@@ -51,22 +50,20 @@ public class LyTreeHelperPlayerListener extends PlayerListener {
     public void registerEvents() {
         PluginManager pm = plugin.getServer().getPluginManager();
 
-        pm.registerEvent(Event.Type.PLAYER_JOIN, this, Priority.Normal, plugin);
-        pm.registerEvent(Event.Type.PLAYER_QUIT, this, Priority.Normal, plugin);
-        pm.registerEvent(Event.Type.PLAYER_KICK, this, Priority.Normal, plugin);
+        pm.registerEvents(this, this.plugin);
     }
 
-    @Override
+    @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
         this.plugin.createEditSession(event.getPlayer(), true);
     }
 
-    @Override
+    @EventHandler
     public void onPlayerQuit(PlayerQuitEvent event) {
         this.plugin.removeEditSession(event.getPlayer().getName());
     }
 
-    @Override
+    @EventHandler
     public void onPlayerKick(PlayerKickEvent event) {
         this.plugin.removeEditSession(event.getPlayer().getName());
     }

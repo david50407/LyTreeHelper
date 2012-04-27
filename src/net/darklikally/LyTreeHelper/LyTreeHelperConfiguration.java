@@ -29,7 +29,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.bukkit.util.config.Configuration;
+
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
 /**
  *
@@ -43,6 +45,7 @@ public class LyTreeHelperConfiguration {
     
     private String world;
     private File configFile;
+    private FileConfiguration config = null;
 
     /* start - Options */
     private boolean showCommandsInLog;
@@ -94,59 +97,51 @@ public class LyTreeHelperConfiguration {
      *
      * @param name
      */
-    public static void createDefaultConfiguration(File actual, String defaultName) {
+    private void createDefaultConfiguration(File actual, String defaultName) {
 
         if (!actual.exists()) {
-
             InputStream input =
                 LyTreeHelperPlugin.class.getResourceAsStream("/defaults/" + defaultName);
             if (input != null) {
-                FileOutputStream output = null;
-
-                try {
-                    output = new FileOutputStream(actual);
-                    byte[] buf = new byte[8192];
-                    int length = 0;
-                    while ((length = input.read(buf)) > 0) {
-                        output.write(buf, 0, length);
-                    }
-
-                    logger.info("[LyTreeHelper] Configuration file written: " + defaultName);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        if (input != null) {
-                            input.close();
-                        }
-                    } catch (IOException e) {
-                    }
-
-                    try {
-                        if (output != null) {
-                            output.close();
-                        }
-                    } catch (IOException e) {
-                    }
+            	this.config = YamlConfiguration.loadConfiguration(input);
+            }
+            else {
+            	this.config = new YamlConfiguration();
+            	this.config.options().copyDefaults(true);
+            	try {
+					this.config.save("/defaults/" + defaultName);
+                } catch (IOException ex) {
+                	this.plugin.getLogger().log(Level.SEVERE, "[LyTreeHelper] LyTreeHelper Could not save config to /defaults/" + defaultName, ex);
                 }
             }
+            try {
+            	this.config.save(actual.toString());
+            } catch (IOException ex) {
+            	this.plugin.getLogger().log(Level.SEVERE, "[LyTreeHelper] LyTreeHelper Could not save config to " + actual.toString(), ex);
+            }
         }
+        this.plugin.reloadConfig();
     }
 
    /**
      * Load the configuration.
      */
     private void loadConfiguration() {
-        Configuration config = new Configuration(this.configFile);
-        config.load();
+        //Configuration config = new Configuration(this.configFile);
+        //config.load();
+    	FileConfiguration config = this.plugin.getConfig();
+    	try {
+			config.load(this.configFile);
+		} catch (Exception e) {}
 
         if(config.getBoolean("copy-other-configuration", false)) {
             String worldToCopy = config.getString("copy-from", null);
             File otherWorldsConfigFile = new File(this.plugin.getDataFolder(), worldToCopy + ".yml" );
             if(otherWorldsConfigFile.exists()) {
                 this.configFile = otherWorldsConfigFile;
-                config = new Configuration(this.configFile);
-                config.load();
+            	try {
+        			config.load(this.configFile);
+        		} catch (Exception e) {}
             }
         }
 
@@ -171,22 +166,23 @@ public class LyTreeHelperConfiguration {
         this.appleDropOverTime = config.getBoolean("enable-apple-drops-over-time", false);
         this.appleDropOverTimeChance = config.getDouble("apple-drops-over-time-chance", 1.0);
 
-        this.creaturesToSpawn = new HashSet<String>(config.getStringList("creatures-to-spawn-in-trees", null));
+        this.creaturesToSpawn = new HashSet<String>(config.getStringList("creatures-to-spawn-in-trees"));
         this.creatureSpawnChance = config.getDouble("creature-spawn-chance", 50.0);
 
-        this.destructionTools = new HashSet<Integer>(config.getIntList("full-destruction-tools", null));
-        this.harvestTools = new HashSet<Integer>(config.getIntList("harvest-tools", null));
+        this.destructionTools = new HashSet<Integer>(config.getIntegerList("full-destruction-tools"));
+        this.harvestTools = new HashSet<Integer>(config.getIntegerList("harvest-tools"));
 
         this.appleChance = config.getDouble("apple-drop-chance", 1.0);
         this.goldenAppleChance = config.getDouble("golden-apple-drop-chance", 0.1);
         this.leavesChance = config.getDouble("leaves-block-drop-chance", 5.0);
         this.saplingChance = config.getDouble("sapling-drop-chance", 8.0);
 
-        if(config.getKeys("custom-drops") != null && config.getKeys("custom-drops").size() != 0) {
-            for (String item : config.getKeys("custom-drops")) {
-                this.customDrops.put(item, config.getDouble("custom-drops." + item, 10.0));
-            }
-        }
+        if (config.getConfigurationSection("custom-drops") != null)
+        {
+        	for (String item : config.getConfigurationSection("custom-drops").getKeys(false)) {
+        		this.customDrops.put(item, config.getConfigurationSection("custom-drops").getDouble(item, 10.0));
+        	}
+    	}
 
         // Print an overview of settings
         if (config.getBoolean("show-config-on-start", true)) {
